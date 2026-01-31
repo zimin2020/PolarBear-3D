@@ -1,0 +1,41 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller dmgbuild
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller PolarBear_mac.spec
+
+    - name: Create DMG
+      run: |
+        hdiutil create -volname "PolarBear" -srcfolder dist/PolarBear.app -ov -format UDZO PolarBear.dmg
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: PolarBear-macOS-DMG
+        path: PolarBear.dmg
